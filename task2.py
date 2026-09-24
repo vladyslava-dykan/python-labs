@@ -33,14 +33,14 @@ resources = [
 security_levels = ("Unclassified", "For Official Use", "Confidential", "Secret")
 blocked_users = {"test_account", "gdpr_violation", "data_breach_user"}
 
-def main():
+def display_resources():
     print("РЕСУРСИ СИСТЕМИ:")
     for res_name, level_num in resources:
         level_name = security_levels[level_num - 1]
         print(f"Ресурс: {res_name} | Рівень: {level_name}")
-  
+
+def verify_all_accesses():
     print("\nРЕЗУЛЬТАТИ ПЕРЕВІРКИ:")
-    
     all_users = set(list(users.keys()) + list(blocked_users))
 
     for username in sorted(all_users):
@@ -57,6 +57,11 @@ def main():
                 result = "DENY (Insufficient clearance)"
             
             print(f"user={username} resource={res_name} -> {result}")
+
+def main():
+    display_resources()
+    verify_all_accesses()
+    
 
 if __name__ == '__main__':
     main()

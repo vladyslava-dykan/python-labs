@@ -67,7 +67,7 @@ def log_event(func):
                 logs.append(log_data)
                 with open(path, 'w', encoding='utf-8') as f:
                     json.dump(logs, f, ensure_ascii=False, indent=4)
-            except (OSError, PermissionError):
+            except (PermissionError, OSError):
                 pass
     return wrapper
 
@@ -87,7 +87,7 @@ def create_users(users_list):
                 data = create_user(uname, pwd)
                 if data:
                     writer.writerow(data)
-    except (OSError, FileNotFoundError, PermissionError):
+    except (FileNotFoundError, PermissionError, OSError):
         pass
 
 def read_users_db():
@@ -103,7 +103,7 @@ def read_users_db():
         print(f"{'Логін':<20}{'Хеш пароля'}")
         for u in users_db:
             print(f"{u['username']:<20}{u['hash']}")
-    except (OSError, FileNotFoundError, PermissionError):
+    except (FileNotFoundError, PermissionError, OSError):
         pass
     return users_db
 
@@ -119,7 +119,7 @@ def login(username: str, password: str) -> bool:
             if u['username'] == username and u['hash'] == hsh:
                 return True
         return False
-    except (OSError, FileNotFoundError, PermissionError, ValidationError):
+    except (FileNotFoundError, PermissionError, ValidationError, OSError):
         return False
 
 def main():
