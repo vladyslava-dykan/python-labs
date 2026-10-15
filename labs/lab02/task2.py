@@ -28,18 +28,21 @@ class Anomaly:
 
 
 def read_dns_log(path):
-    with Path(path).open(encoding="utf-8", newline="") as file:
-        reader = csv.DictReader(file)
-        for line_number, row in enumerate(reader, start=2):
-            try:
-                yield DnsRecord(
-                    timestamp=datetime.fromisoformat(row["Timestamp"]),
-                    client_ip=row["ClientIP"].strip(),
-                    domain=row["Domain"].strip().lower(),
-                    query_type=row["QueryType"].strip().upper(),
-                )
-            except (KeyError, ValueError, AttributeError):
-                logger.warning("Пропущено некоректний рядок %d", line_number)
+    try:
+        with Path(path).open(encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file)
+            for line_number, row in enumerate(reader, start=2):
+                try:
+                    yield DnsRecord(
+                        timestamp=datetime.fromisoformat(row["Timestamp"]),
+                        client_ip=row["ClientIP"].strip(),
+                        domain=row["Domain"].strip().lower(),
+                        query_type=row["QueryType"].strip().upper(),
+                    )
+                except (KeyError, ValueError, AttributeError):
+                    logger.warning("Пропущено некоректний рядок %d", line_number)
+    except OSError as error:
+        logger.error("Не вдалося прочитати файл %s: %s", path, error)
 
 
 def load_blacklist(path):
@@ -78,21 +81,24 @@ def find_anomalies(records, blacklist, min_domain_len):
 
 def write_anomalies_csv(anomalies, path):
     out_path = Path(path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Timestamp", "ClientIP", "Domain", "QueryType", "Reason"])
-        for anomaly in anomalies:
-            record = anomaly.record
-            parts = (["Blacklisted domain"] if anomaly.blacklisted else []) + (
-                anomaly.reasons
-            )
-            writer.writerow(
-                [
-                    record.timestamp.isoformat(),
-                    record.client_ip,
-                    record.domain,
-                    record.query_type,
-                    "; ".join(parts),
-                ]
-            )
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("w", encoding="utf-8", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Timestamp", "ClientIP", "Domain", "QueryType", "Reason"])
+            for anomaly in anomalies:
+                record = anomaly.record
+                parts = (["Blacklisted domain"] if anomaly.blacklisted else []) + (
+                    anomaly.reasons
+                )
+                writer.writerow(
+                    [
+                        record.timestamp.isoformat(),
+                        record.client_ip,
+                        record.domain,
+                        record.query_type,
+                        "; ".join(parts),
+                    ]
+                )
+    except OSError as error:
+        logger.error("Не вдалося записати файл %s: %s", out_path, error)
